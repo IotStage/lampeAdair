@@ -1,10 +1,9 @@
 <?php  
-require_once("connexion.php");
- $output = '';  
+//require_once("connexion.php");
+// $output = '';  
 
-// if(isset($_POST["export_excel"]))  
- //{  
-      $sql = "SELECT * FROM lampeadair";
+ if(isset($_POST["output"]))  {  
+      /*$sql = "SELECT * FROM lampeadair";
       $bdd = (new Controller())->connecteToDataBase();
       //(new Controller())->selectEntries($bdd);
       $result = $bdd->query("SELECT * FROM lampeadair");
@@ -27,11 +26,11 @@ require_once("connexion.php");
                           <td>' . (explode(" ",$row["date_heure"])[1]) . '</td>  
                      </tr>  
                 ';  
-           }  
-           $output .= '</table>';  
+           }*/  
+           $output = $_POST['output'];  
            header("Content-Type: application/xls");   
            header("Content-Disposition: attachment; filename=download.xls"); 
-           echo $output;  
+           echo  $output;  
         
- //}  
+}  
  ?>

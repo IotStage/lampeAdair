@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<?php
-	if(isset($_POST[''])){
-
-	}else{
-?>
 <html>
 	<head>Lampe à d'air</head>
 	<body>
@@ -24,16 +19,18 @@
 				</tbody>
 			</table>
 		</div>
-		<form method="POST" action="">
+		<form method="POST" action="excel.php">
+			<input type="text" name="output" hidden="true" id="output"/>
         		<center><input type="submit" name="export_excel" class="btn btn-success" value="TELECHARGER FORMAT EXCEL"></center>
 		</form>
+	
 	
 		<script type="text/javascript" src="jquery.js"></script>	
 		<script type="text/javascript">
 			window.onload=function(){
 				setInterval(function(){
 					$.ajax({
-			       			url: 'http://192.168.1.101/iot_stage/firstProject/machine/remote.php',
+			       			url: 'http://192.168.1.102/iot_stage/lampeAdair/machine/remote.php',
 			        		method: 'POST',
 						data: { auth:'sur'},
 						//contentType: 'application/json; charset=utf-8',
@@ -44,18 +41,17 @@
 						var latable = document.getElementById("tbody");
 						
 						latable.innerHTML=data;
+						document.getElementById("output").value = document.getElementById("matab").innerHTML;
 				
 						});
 					}, 
 					3000
 				);
 			}
+
+			
 		</script>
 	
 	</body>
 </html>
-<?php
-	
-	}
-?>
 
