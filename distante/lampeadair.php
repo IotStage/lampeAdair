@@ -30,7 +30,7 @@
 			window.onload=function(){
 				setInterval(function(){
 					$.ajax({
-			       			url: 'http://192.168.1.102/iot_stage/lampeAdair/machine/remote.php',
+			       			url: 'http://10.2.6.164/lampeadair/remote.php',
 			        		method: 'POST',
 						data: { auth:'sur'},
 						//contentType: 'application/json; charset=utf-8',
