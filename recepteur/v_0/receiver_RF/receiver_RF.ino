@@ -33,7 +33,6 @@ void setup()
 void loop()
 {
   verificationPaquetRecu();
-  //sendToEthernet("16.78");
 }
 
 
@@ -94,9 +93,6 @@ String receptionPaquet(){
         }
       }
     }
-
-    //envoyer les données à l'autre carte arduino
-    //sendToEthernet(data);
     
     return data;
 }

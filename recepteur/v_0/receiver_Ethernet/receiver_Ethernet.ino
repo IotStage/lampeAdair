@@ -4,10 +4,10 @@
 
 
 // parametres shield ethernet
-IPAddress ip(192,168,1,2);
+IPAddress ip(172,16,0,101);
 EthernetClient client;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-char server [] = "192.168.1.101";
+char server [] = "172.16.0.2";
 
 int taille=2;
 String data = "";
@@ -69,7 +69,7 @@ void sendEthernetData(String donnees){
   Serial.println(donnees);
   Serial.println("---------------------------------------------");
   
-  client.print("GET /iot_stage/firstProject/machine/lampeadair.php?donnees=");
+  client.print("GET /lampeadair/lampeadair.php?donnees=");
   client.print(donnees);
   client.println(" HTTP/1.1");
   client.print("Host: ");
