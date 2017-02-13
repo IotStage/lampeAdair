@@ -32,6 +32,7 @@ void loop()
 {
   float sensor = getSensorValue();
   String res = String(sensor, DEC);
+  Serial.println("courant: "+res+" "+getDate());
   if(sensor != 0.0){
     sauvegarde(res);
     sendToSlave(res);
@@ -65,7 +66,7 @@ float getSensorValue(){
   DateTime now = rtc.now();
   
   //if( now.hour() >= 7 && now.hour() <= 19){
-  if( now.hour() >= 13 && now.hour() <= 14){
+  if( now.hour() >= 15 && now.hour() <= 16){
     int lu = analogRead(pinOut);
     
     float voltage = 5000*(lu/1024.0) + 15;
@@ -112,7 +113,7 @@ String getDate(){
 void sauvegarde(String mesure){
   DateTime now = rtc.now();
   String nomFichier = "";
-  nomFichier = String(now.month(), DEC)+"_"+String(now.year(), DEC)+".txt";
+  nomFichier = String(now.day(), DEC)+"_"+String(now.month(), DEC)+"_"+String(now.year(), DEC)+".txt";
   //Serial.println(nomFichier);
   String donnees = mesure+" "+getDate();
 
@@ -133,7 +134,7 @@ void sauvegarde(String mesure){
 void allumeLampe(){
   DateTime now = rtc.now();
  // if(now.hour() >= 19 || now.hour() <= 7){
-  if(now.hour() >= 11 && now.hour() < 13){
+  if(now.hour() >= 17 && now.hour() < 19){
     if(etat_lampe == false){
       digitalWrite(LAMPE, HIGH);
        etat_lampe = true;
