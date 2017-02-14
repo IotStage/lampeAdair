@@ -20,7 +20,7 @@ void setup()
   initialisation();
   Wire.begin(4);       // Rejoindre le bus à l'adresse #4
   Wire.onReceive(receiveEvent); // Preparer une fonction spécifique a la reception de donnee
-  Serial.begin(9600);
+  
   
 }
 
@@ -39,13 +39,14 @@ void initialisation(){
   Serial.println("Intialisation...");
 
   //initialisation du module ethernet
-  if(!Ethernet.begin(mac)){
+  /*if(!Ethernet.begin(mac)){
     Ethernet.begin(mac, ip);
     Serial.print("parametrage avec ip fixe: ");
     Serial.println(ip);
   }else{
     Serial.println("parametrage avec dhcp");
-  }
+  }*/
+  Ethernet.begin(mac, ip);
   Serial.println("ethernet initialisé");
   
 }
@@ -84,6 +85,7 @@ void sendEthernetData(String donnees){
 
 // Fonction qui s execute si quelque chose est present sur l interface
 void receiveEvent(int taille){
+  
   data = "";
   while (Wire.available()) { // slave may send less than requested
     char c = Wire.read(); // receive a byte as character
@@ -91,7 +93,7 @@ void receiveEvent(int taille){
     //Serial.print(c);  
   }
   
-  Serial.println(" ");     // print the character
+  //Serial.println(" ");     // print the character
   //Serial.println(data);
   sendEthernetData(data);
   

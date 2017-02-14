@@ -30,12 +30,12 @@
 			window.onload=function(){
 				setInterval(function(){
 					$.ajax({
-			       			url: 'http://10.2.6.164/lampeadair/remote.php',
+			       			url: 'http://172.16.0.2/lampeadair/remote.php',
 			        		method: 'POST',
 						data: { auth:'sur'},
 						//contentType: 'application/json; charset=utf-8',
 						//dataType: 'html',
-						crossDomain: true
+						//crossDomain: true
 						
 			 		}).then(function(data) {
 						var latable = document.getElementById("tbody");

@@ -1,8 +1,8 @@
-#include <RTClib.h>
+
 #include "EEPROM.h"
 #include "cc1101.h"
 
-RTC_Millis rtc;
+
 
 //constantes pour le capteur de courant
 const int pinOut = A0;
@@ -24,8 +24,9 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-//datenow
-DateTime today;
+int heure=10;
+long times=0;
+
 
 void setup()
 {
@@ -34,10 +35,7 @@ void setup()
   //lampe
   pinMode(LAMPE, OUTPUT);
 
-  //initialisation RTC
-  rtc.begin(DateTime(F(__DATE__), F(__TIME__)));
-  Serial.println("Initialisarion RTC terminee...");
-  delay(100);
+
 
   // initialisation de l'antenne RF
   cc1101.init();
@@ -45,28 +43,25 @@ void setup()
   cc1101.disableAddressCheck(); //if not specified, will only display "packet received"
   attachInterrupt(0, cc1101signalsInterrupt, FALLING);
   Serial.println("Initialisarion antenne RF terminee...");
+  times = millis();
   
 }
 
 void loop()
 {
-
-   today = rtc.now();
-   String date_now = getDate();
    String res;
 
-  int heure = today.hour();
   if(heure >= 19 || heure < 7){
-  //if(heure >= 9 && heure < 10 && today.minute()>11){
     //allumer la lampe
     if(etat_lampe == false){
       digitalWrite(LAMPE, HIGH);
        etat_lampe = true;
    }
    
-   Serial.println("Lampe allume "+date_now);
+   Serial.println("Lampe allume a l'heure "+heure);
 
-  }else{
+  }
+  else{
 
     //etteindre la lampe
     if(etat_lampe == true){
@@ -77,7 +72,7 @@ void loop()
     //envoyer par RF
     float sensor = getSensorValue();
     res = String(sensor, DEC);
-    res += " "+date_now;
+   
     Serial.println("mesure: "+res);
     formatPaquet(res);
     
@@ -107,26 +102,6 @@ float getSensorValue(){
 }
 
 
-/**
- * Récpeurer la date et l'heure
- */
-String getDate(){
-   String datte ="";
-   datte+=today.day();
-   datte+='-';
-   datte+=String(today.month(), DEC);
-   datte+='-';
-   datte+=String(today.year(), DEC);
-   datte+=" ";
-   datte+=String(today.hour(), DEC);
-   datte+=':';
-   datte+=String(today.minute(), DEC);
-   datte+=':';
-   datte+=String(today.second(), DEC);
-   //date+='-';
-   return datte;
-   
-}
 
 /* Handle interrupt from CC1101 (INT0) gdo0 on pin2 */
 void cc1101signalsInterrupt(void){
@@ -165,6 +140,20 @@ void formatPaquet(String message){
   }
 }
 
-
-
+int getHeure()
+{
+  
+  if(millis-times > 3600000 )
+  {
+    times = millis;
+    
+    //heure = heure == 23 ? heure+1 : 0
+    
+    if(heure == 23 ) 
+      heure = 0;
+    else 
+      heure +=1; 
+  }
+  return heure;
+}
 

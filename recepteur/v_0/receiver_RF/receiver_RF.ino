@@ -120,6 +120,7 @@ void verificationPaquetRecu(){
 void sendToEthernet(char* donnees){
   //char donnees [data.length()];
   //data.toCharArray(donnees, data.length());
+  Serial.println("\necriture vers ethernet");
   Wire.beginTransmission(4); // Envoyer vers device #4
   Wire.write(donnees); 
   Wire.endTransmission();    // Arreter la transmission
