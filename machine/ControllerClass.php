@@ -49,16 +49,11 @@
 		/**
 		* insert datas to remote databases;
 		*/
-		function replicateToDISI($mesure, $ladate){
-			/*$http_server = new HTTPRequest("srv01.crtp.ucad.sn/lampeadair.php", HTTP_METH_POST);
-			$http_server->addPostFields(array('mesure' => $mesure, 'date_heure' => $ladate));
-			try {
-    				$http_server->send();
-			} catch (HTTPException $ex) {
-			    
-			}*/
-			$res = "http://srv01.crtp.ucad.sn/lampeadair.php?mesure=$mesure&date_heure=$ladate";
-			http_get($res);
+		function replicate($url, $donnees){
+			$donnees = str_replace(" ","%20",$donnees);
+			$URL="$url?donnees=$donnees";
+			$url = urlencode($URL);
+			$resultat = file_get_contents("$URL");
 		}
 
 	}

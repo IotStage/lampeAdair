@@ -2,8 +2,10 @@
 
 	//$_GET['donnees'] = 19;
 	if(isset($_GET['donnees'])){
-		$mesure = $_GET['donnees'];
-		$ladate = date("Y-m-d H:i:s");
+		$donnees = explode(" ",$_GET['donnees']);
+		$mesure = $donnees[0];
+		$ladate = $donnees[1] . " " . $donnees[2];
+		//$ladate = date("Y-m-d H:i:s");
 		
 		require_once("ControllerClass.php");	
 	
@@ -13,7 +15,7 @@
 		$controller->insertToDataBase($bdd_local, $mesure, $ladate);
 		
 		//repliquer dans la base de donnees disi
-//		$controller->replicateToDISI($mesure, $ladate);
+		$controller->replicate("http://edmi.ucad.sn/~moussadiallo/remote_lampedair.php", $_GET['donnees']);
 //		$bdd_disi = $this->connecteToDataBase("srv01.crtp.ucad.sn", "c10pluviodic2", "PluvioDic2", "PluvioDic2");
   //              new Controller()->insertToDataBase($bdd_disi, $mesure, $ladate);
 
