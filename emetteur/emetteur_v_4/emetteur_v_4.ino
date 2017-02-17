@@ -24,11 +24,16 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-int heure=15;
-long times=0;
 long delai_envoi = 0;
 
-
+//constantes pour la date
+int mois_;
+int jour_;
+int an_;
+int heure_=0;
+int minute_=0;
+int seconde_ = 0;
+long date_depart;
 
 
 void setup()
@@ -46,22 +51,22 @@ void setup()
   Serial.println("Initialisarion antenne RF terminee...");
 
   //initilisation de lheure
-  times = millis();
+  initialisation_jour_heure();
   delai_envoi=millis();  
 }
 
 void loop()
 {
-   getHeure();
+   determination_date();
 
-  if(heure >= 20 || heure < 6){
+  if(heure_ >= 20 || heure_ < 6){
     //allumer la lampe
     if(etat_lampe == false){
       digitalWrite(LAMPE, HIGH);
        etat_lampe = true;
    }
    
-   Serial.println("Lampe allume a l'heure "+heure);
+   Serial.println("Lampe allume a l'heure "+heure_);
 
   }
   else{
@@ -72,7 +77,7 @@ void loop()
       etat_lampe= false;
     }
 
-    if(heure >= 11 && heure < 16)
+    if(heure_ >= 11 && heure_ < 16)
     {
       
       if(millis() - delai_envoi > 30000)
@@ -81,7 +86,7 @@ void loop()
         String res;
         float sensor = getSensorValue();
         res = String(sensor, DEC);
-        res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
+        res+=" "+String(heure_)+":"+String(minute_)+":"+String(seconde_); // on ajoute l'heure ur la mesure a envoyer
         formatPaquet(res);
         Serial.println("mesure: "+res);
         delai_envoi=millis();
@@ -151,20 +156,84 @@ void formatPaquet(String message){
   }
 }
 
-void getHeure()
-{
-  
-  if(millis()-times > 3600000 )
-  {
-    times = millis();
-    
-    //heure = heure == 23 ? heure+1 : 0    
-    if(heure == 23 ) 
-      heure = 0;
-    else 
-      heure +=1; 
-  }
-  //return heure;
+
+
+void determination_date(){//fonction nécessaire si on ne dispose pas d'un module timing extérieur
+   boolean changt_date = false;
+   long date_presente = millis();
+   long temps_ecoule=date_presente-date_depart;
+   temps_ecoule=temps_ecoule/1000;
+   if ((seconde_+temps_ecoule)<=59){seconde_ = seconde_+temps_ecoule;}
+   else{seconde_=(seconde_+temps_ecoule)-60;
+   if (minute_<59){minute_=minute_+1;}
+   else{minute_=0;
+   if(heure_<23){heure_=heure_+1;}
+   else{heure_=0;
+   switch (mois_) {
+   case 1 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 2;}
+   break;
+   case 2 :if (jour_<28){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 3;}
+   break;
+   case 3 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 4;}
+   break;
+   case 4 :if (jour_<30){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 5;}
+   break;
+   case 5 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 6;}
+   break;
+   case 6 :if (jour_<30){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 7;}
+   break;
+   case 7 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 8;}
+   break;
+   case 8 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 9;}
+   break;
+   case 9 :if (jour_<30){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 10;}
+   break;
+   case 10 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 11;}
+    break;
+   case 11 :if (jour_<30){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 12;}
+   break;
+   case 12 :if (jour_<31){jour_=jour_+1;}
+   else{jour_ = 1;
+   mois_= 1;
+   an_= an_+1;}
+   break;
+   }
+   }
+   }
+   }
+   date_depart=millis();
 }
+
+void initialisation_jour_heure(){//fonction nécessaire si on ne dispose pas d'un module timing extérieur
+  an_=17;
+  mois_=2;
+  jour_=17;
+  heure_=17;
+  minute_=0;
+  seconde_=0;
+}
+
 
 
