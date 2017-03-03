@@ -5,23 +5,10 @@
 
 
 //constantes pour le capteur de courant
-/*const int pinOut = A0;
+const int pinOut = A0;
 const int sensibilite = 100; //mmv/A
 const int offset = 2500; // Vcc/2 en mV
-*/
-//constantes pour le capteur de courant
-const int pinOut = A0;
-const int sensibilite = 110; //mmv/A
-const int offset = 1650; // Vcc/2 en mV
 
-const int id=2;
-
-float vout = 0.0;
-float vin = 0.0;
-float R1 = 10000; //10k
-float R2 = 1000; //1000 ohm resistor, I tweaked this
-int val_lu = 0;
-int analogInput = A1; // I used A1
 
 //lampe
 const int LAMPE = 7;
@@ -37,17 +24,13 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-int heure=10;
+int heure=16;
 unsigned long times=0;
 unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
 
-
-int HEURE_LAMPE_DEBUT = 19;
-int HEURE_LAMPE_FIN = 6;
-
-
+int teste=1;
 
 
 void setup()
@@ -56,10 +39,13 @@ void setup()
   
   //lampe
   pinMode(LAMPE, OUTPUT);
-  pinMode(analogInput, INPUT);
+  
   // initialisation de l'antenne RF
   cc1101.init();
   cc1101.set_433_GFSK_500_K();        //changement du type de modulation et du debit (modulation GFSK, debit 1,2 kbauds avec frequence 433 Mhz)
+//
+//  //modifier le channel
+  cc1101.setChannel(10);
   cc1101.disableAddressCheck(); //if not specified, will only display "packet received"
   attachInterrupt(0, cc1101signalsInterrupt, FALLING);
   Serial.println("Initialisarion antenne RF terminee...");
@@ -72,8 +58,9 @@ void setup()
 void loop()
 {
    getHeure();
-
-  if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
+   //Serial.println(heure);
+/*
+  if(heure >= 20 || heure < 6){
     //allumer la lampe
     if(etat_lampe == false){
       digitalWrite(LAMPE, HIGH);
@@ -91,22 +78,30 @@ void loop()
       etat_lampe= false;
     }
 
-    //if(heure >= 11 && heure < 16){
-      
-      if(millis() - delai_envoi > 350) { //envoyer par RF
-        
-        String res= String(id, DEC);
-        float courant = getSensorValue();
-        float tension = getTension();
-        res +=" "+String(courant, DEC);
-        res +=" "+String(tension, DEC);
+    if(heure >= 11 && heure < 16)
+    {
+      temp = millis();
+      if(temp - delai_envoi >= 30000)
+      //envoyer par RF
+      {
+        String res;
+        float sensor = getSensorValue();
+        res = String(sensor, DEC);
         res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
         formatPaquet(res);
         Serial.println("mesure: "+res);
-        delai_envoi=millis();
-        
+        delai_envoi=temp;
       }
-   //} 
+    } 
+  }*/
+
+ temp = millis();
+  if(temp - delai_envoi >= 30){
+    String res = "envoie " + String((teste%2), DEC);
+    formatPaquet(res);
+    Serial.println(res);
+    delai_envoi=temp;
+    teste++;
   }
   
   //delay(2000); // Attendre 2s
@@ -132,14 +127,6 @@ float getSensorValue(){
   
 }
 
-float getTension(){
-   // read the value at analog input
-   val_lu = analogRead(analogInput);
-   vout = (val_lu * 5.0) / 1024.0;
-   vin = vout / (R2/(R1+R2)); 
-
-   return vin;
-}
 
 
 /* Handle interrupt from CC1101 (INT0) gdo0 on pin2 */
@@ -163,6 +150,8 @@ void envoiPaquet() {
  */
 void formatPaquet(String message){
   if(message.length()<61){
+    //Serial.print("Taille ");
+    //Serial.println(message.length());
     paquet.length=message.length();
     message.getBytes(paquet.data, message.length()+1);
     envoiPaquet();
@@ -179,7 +168,6 @@ void formatPaquet(String message){
 
 void getHeure()
 {
- 
   temp = millis();
   if(temp < times){
     if((MAX_ULONG-times+temp) >= 3600000){
@@ -203,6 +191,7 @@ void getHeure()
         heure +=1; 
     }
   }
+  //return heure;
 }
 
 
