@@ -63,7 +63,7 @@ void setup()
 void loop()
 {
    getHeure();
-   Serial.println(heure);
+   //Serial.println(heure);
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
     //allumer la lampe

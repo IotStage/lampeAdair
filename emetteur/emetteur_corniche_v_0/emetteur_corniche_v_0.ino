@@ -2,52 +2,47 @@
 #include "EEPROM.h"
 #include "cc1101.h"
 
+//*************** identifiant du dispositif
+const int id=2;
 
-
-//constantes pour le capteur de courant
-/*const int pinOut = A0;
-const int sensibilite = 100; //mmv/A
-const int offset = 2500; // Vcc/2 en mV
-*/
 //constantes pour le capteur de courant
 const int pinOut = A0;
 const int sensibilite = 110; //mmv/A
 const int offset = 1650; // Vcc/2 en mV
 
-const int id=2;
-
+//******************************capteurs de tensions
+int INPUT_BATTERIE = A1; // I used A1
+int INPUT_SOLAIRE = A2;
 float vout = 0.0;
 float vin = 0.0;
 float R1 = 10000; //10k
 float R2 = 1000; //1000 ohm resistor, I tweaked this
 int val_lu = 0;
-int analogInput = A1; // I used A1
+const float TENSION_SEUILLE_BATTERIE = 12.0;
 
-//lampe
+
+//************************** lampe
 const int LAMPE = 7;
-boolean etat_lampe = false;
+boolean LAMPE_ALLUMEE = false; //renseigne sur letat de la lampe
+boolean NORMALE_STATE = false; 
+unsigned int HEURE_LAMPE_DEBUT = 19;
+unsigned int HEURE_LAMPE_FIN = 6;
 
-//creation d'un objet cc1101
+//************************************* RF
 CC1101 cc1101;
-
 byte syncWord[2] = {199, 0}; // mot de synchronisation
-
 CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles | FCS)
-
-// a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
+
+//********************* transmissions
 int heure=10;
 unsigned long times=0;
-unsigned long delai_envoi = 0;
+unsigned long last_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
-
-
-int HEURE_LAMPE_DEBUT = 19;
-int HEURE_LAMPE_FIN = 6;
-
-
+unsigned current_millis;
+unsigned int PERIODE_ENVOIE = 25000;
 
 
 void setup()
@@ -56,60 +51,52 @@ void setup()
   
   //lampe
   pinMode(LAMPE, OUTPUT);
-  pinMode(analogInput, INPUT);
+  pinMode(INPUT_BATTERIE, INPUT);
+  pinMode(INPUT_SOLAIRE, INPUT);
   // initialisation de l'antenne RF
   cc1101.init();
   cc1101.set_433_GFSK_500_K();        //changement du type de modulation et du debit (modulation GFSK, debit 1,2 kbauds avec frequence 433 Mhz)
+  //cc1101.setChannel(10);
   cc1101.disableAddressCheck(); //if not specified, will only display "packet received"
   attachInterrupt(0, cc1101signalsInterrupt, FALLING);
   Serial.println("Initialisarion antenne RF terminee...");
 
   //initilisation de lheure
   times = millis();
-  delai_envoi=millis();  
 }
 
 void loop()
 {
-   getHeure();
+    current_millis = millis();
+    getHeure();
+
+  //envoyer les données par RF
+  if(current_millis - last_envoi > PERIODE_ENVOIE) { //envoyer par RF
+      String res= String(id, DEC);
+      float courant = getSensorValue();
+      float tension_batterie = getTensionBatterie();
+      float tension_solaire = getTensionSolaire();
+      res +=" "+String(courant, DEC);
+      res +=" "+String(tension_batterie, DEC);
+      res +=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
+      res +=" "+String(tension_solaire, DEC);
+      //formatPaquet(res);
+      Serial.println("mesure: "+res);
+      last_envoi = current_millis;
+
+      if(tension_batterie<TENSION_SEUILLE_BATTERIE){
+          NORMALE_STATE = false;
+      }else{
+          NORMALE_STATE = true;
+      }
+  }
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
-    //allumer la lampe
-    if(etat_lampe == false){
-      digitalWrite(LAMPE, HIGH);
-       etat_lampe = true;
-   }
-   
-   Serial.println("Lampe allume a l'heure "+heure);
-
+     allumerLampe();
+  }else{
+    eteindreLampe();
   }
-  else{
-
-    //etteindre la lampe
-    if(etat_lampe == true){
-      digitalWrite(LAMPE, LOW);
-      etat_lampe= false;
-    }
-
-    //if(heure >= 11 && heure < 16){
-      
-      if(millis() - delai_envoi > 350) { //envoyer par RF
-        
-        String res= String(id, DEC);
-        float courant = getSensorValue();
-        float tension = getTension();
-        res +=" "+String(courant, DEC);
-        res +=" "+String(tension, DEC);
-        res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
-        formatPaquet(res);
-        Serial.println("mesure: "+res);
-        delai_envoi=millis();
-        
-      }
-   //} 
-  }
-  
-  //delay(2000); // Attendre 2s
+  //Serial.println("Lampe allume a l'heure "+LAMPE_ALLUMEE);
 }
 
 
@@ -119,25 +106,25 @@ void loop()
  */
 
 float getSensorValue(){
-
     int lu = analogRead(pinOut);
-    
     float voltage = 5000*(lu/1024.0); // + 15;
-    
     float y = offset-voltage; //en mV
-    
     float value = y/sensibilite;
-  
     return value;
   
 }
 
-float getTension(){
-   // read the value at analog input
-   val_lu = analogRead(analogInput);
+float getTensionBatterie(){
+   val_lu = analogRead(INPUT_BATTERIE);
    vout = (val_lu * 5.0) / 1024.0;
    vin = vout / (R2/(R1+R2)); 
+   return vin;
+}
 
+float getTensionSolaire(){
+   val_lu = analogRead(INPUT_SOLAIRE);
+   vout = (val_lu * 5.0) / 1024.0;
+   vin = vout / (R2/(R1+R2)); 
    return vin;
 }
 
@@ -180,10 +167,9 @@ void formatPaquet(String message){
 void getHeure()
 {
  
-  temp = millis();
-  if(temp < times){
-    if((MAX_ULONG-times+temp) >= 3600000){
-      times = temp;
+  if(current_millis < times){
+    if((MAX_ULONG-times+current_millis) >= 3600000){
+      times = current_millis;
      if(heure == 23 ) 
         heure = 0;
       else 
@@ -192,9 +178,9 @@ void getHeure()
   }
   else{
     
-    if(temp-times >= 3600000 )
+    if(current_millis-times >= 3600000 )
     {
-      times = temp; //+(temp-times-3600000)
+      times = current_millis; //+(temp-times-3600000)
       
       //heure = heure == 23 ? heure+1 : 0    
       if(heure == 23 ) 
@@ -205,4 +191,21 @@ void getHeure()
   }
 }
 
+void allumerLampe(){
+  if(LAMPE_ALLUMEE == false && NORMALE_STATE == true){
+       digitalWrite(LAMPE, HIGH);
+       LAMPE_ALLUMEE = true;
+       Serial.println("Lampe allumeer");
+   }else if(NORMALE_STATE == false){
+     eteindreLampe();
+   }
+}
+
+void eteindreLampe(){
+  if(LAMPE_ALLUMEE == true){
+      digitalWrite(LAMPE, LOW);
+      LAMPE_ALLUMEE = false;
+      Serial.println("Lampe eteinte");
+   }
+}
 
