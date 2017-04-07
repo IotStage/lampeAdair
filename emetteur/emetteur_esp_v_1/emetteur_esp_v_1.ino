@@ -3,10 +3,10 @@
 #include "cc1101.h"
 
  //constantes tension
- /**
+
 const float sensibiliteTension = 0.0681*1000;
-const float offsetTension = 2475.0;
-const int voltageSensorPin = A1;*/
+const float offsetTension = 2500.0;
+//const int voltageSensorPin = A1;*/
 
 //constantes pour le capteur de courant
 const int pinOut = A0;
@@ -39,7 +39,7 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-int heure=19;
+int heure=22;
 unsigned long times=0;
 unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
@@ -78,6 +78,8 @@ void loop()
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
     etat_batterie = getEtatBatterie();
+    Serial.print("etat lampe");
+    Serial.println(etat_batterie);
     //allumer la lampe
     if(etat_lampe == false && etat_batterie == true && jour == false){
       digitalWrite(LAMPE, HIGH);
@@ -87,7 +89,7 @@ void loop()
      jour = true;
    }
    
-   Serial.println("Lampe allume a l'heure "+heure);
+   //Serial.println("Lampe allume a l'heure "+heure);
     temp = millis();
     if(temp - delai_envoi >= DELAI_ENVOI_SOIR){ //
       envoiDonnees();
@@ -136,20 +138,24 @@ float getSensorValue(){
 }
 
 float getTension(int pin){
-   // read the value at analog input
    val_lu = analogRead(pin);
    vout = (val_lu * 5.0) / 1024.0;
    vin = vout / (R2/(R1+R2)); 
-
    return vin;
 }
 
 float getTensionPanneau(){
-   return getTension(analogInputPanneau);
+    return getTension(analogInputPanneau);
 }
 
 float getTensionBatterie(){
-   return getTension(analogInputBatterie);
+  int sensor = analogRead(analogInputBatterie);
+  float voltage = sensor*(5000.0/1023.0);
+  float num = voltage - offsetTension;
+  float mesure = num / sensibiliteTension;
+  
+  return mesure;
+   //return getTension(analogInputBatterie);
 }
 
 /* Handle interrupt from CC1101 (INT0) gdo0 on pin2 */
@@ -218,35 +224,25 @@ void getHeure()
 }
 
 boolean getEtatBatterie(){
-  return getTensionBatterie() > 12;
+  return getTensionBatterie() > 11;
 }
 
 void envoiDonnees(){
   
   String res = String(id, DEC);
   float courant =   getSensorValue();
-  float tension1 =  getTensionPanneau();
-   float tension2 = getTensionBatterie();
+  float tension2 =  getTensionPanneau();
+   float tension1 = getTensionBatterie();
   res +=" "+String(courant, DEC);
   res +=" "+String(tension1, DEC);
   res +=" "+String(tension2, DEC);
   res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
+  res+=" "+String(getEtatLampe());
   formatPaquet(res);
   Serial.println("mesure: "+res);
 }
 
-/*
-float getVoltageValue(){
-  
-  int sensor = analogRead(voltageSensorPin);
-  
-  float voltage = sensor*(5000.0/1023.0);
-  
-  float num = voltage - offsetTension;
-  
-  float mesure = num / sensibiliteTension;
-  
-  return mesure;
+boolean getEtatLampe(){
+  return etat_lampe == true && jour == false;
 }
-*/
 

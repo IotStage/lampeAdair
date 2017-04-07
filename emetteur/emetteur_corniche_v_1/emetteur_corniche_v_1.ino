@@ -212,12 +212,13 @@ void envoiDonnees(){
   
   String res = String(id, DEC);
   float courant =   getSensorValue();
-  float tension1 =  getTensionPanneau();
-   float tension2 = getTensionBatterie();
+  float tension2 =  getTensionPanneau();
+   float tension1 = getTensionBatterie();
   res +=" "+String(courant, DEC);
   res +=" "+String(tension1, DEC);
   res +=" "+String(tension2, DEC);
   res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
+  res+=" "+String(getEtatLampe());
   formatPaquet(res);
   Serial.println("mesure: "+res);
 }
@@ -235,5 +236,7 @@ float getVoltageValue(int pin){
   
   return mesure;
 }
-
+boolean getEtatLampe(){
+  return etat_lampe == true && jour == false;
+}
 
