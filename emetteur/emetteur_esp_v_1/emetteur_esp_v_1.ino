@@ -6,7 +6,7 @@
 
 const float sensibiliteTension = 0.0681*1000;
 const float offsetTension = 2500.0;
-//const int voltageSensorPin = A1;*/
+//const int voltageSensorPin = A1;
 
 //constantes pour le capteur de courant
 const int pinOut = A0;
@@ -39,13 +39,13 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-int heure=22;
+int heure=19;
 unsigned long times=0;
 unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
 
-const int DELAI_ENVOI_MATIN = 60000;
+long DELAI_ENVOI_MATIN = 60000; //60;
 long DELAI_ENVOI_SOIR = 1800000; //30*DELAI_ENVOI_MATIN
 int HEURE_LAMPE_DEBUT = 19;
 int HEURE_LAMPE_FIN = 6;
@@ -77,34 +77,19 @@ void loop()
    
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
-    etat_batterie = getEtatBatterie();
-    Serial.print("etat lampe");
-    Serial.println(etat_batterie);
-    //allumer la lampe
-    if(etat_lampe == false && etat_batterie == true && jour == false){
-      digitalWrite(LAMPE, HIGH);
-       etat_lampe = true;
-   }else if(etat_batterie == false){
-     digitalWrite(LAMPE, LOW);
-     jour = true;
-   }
+    allumerLampe();
    
    //Serial.println("Lampe allume a l'heure "+heure);
     temp = millis();
     if(temp - delai_envoi >= DELAI_ENVOI_SOIR){ //
+      etat_batterie = getEtatBatterie();
       envoiDonnees();
       delai_envoi=temp;
     }
   }
   else{
-    jour = false;
-    //etteindre la lampe
-    if(etat_lampe == true){// || 
-      digitalWrite(LAMPE, LOW);
-      etat_lampe= false;
-      
-    }
-
+    
+    eteindreLampe();
     //if(heure >= 11 && heure < 16){
       temp = millis();
       if(temp - delai_envoi >= DELAI_ENVOI_MATIN){
@@ -144,15 +129,15 @@ float getTension(int pin){
    return vin;
 }
 
-float getTensionPanneau(){
+float getTensionBatterie(){
     return getTension(analogInputPanneau);
 }
 
-float getTensionBatterie(){
+float getTensionPanneau(){
   int sensor = analogRead(analogInputBatterie);
   float voltage = sensor*(5000.0/1023.0);
   float num = voltage - offsetTension;
-  float mesure = num / sensibiliteTension;
+  float mesure = num / sensibiliteTension; //-3.0;
   
   return mesure;
    //return getTension(analogInputBatterie);
@@ -233,9 +218,9 @@ void envoiDonnees(){
   float courant =   getSensorValue();
   float tension2 =  getTensionPanneau();
    float tension1 = getTensionBatterie();
-  res +=" "+String(courant, DEC);
-  res +=" "+String(tension1, DEC);
-  res +=" "+String(tension2, DEC);
+  res +=" "+String(courant, 3);
+  res +=" "+String(tension1, 3);
+  res +=" "+String(tension2, 3);
   res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
   res+=" "+String(getEtatLampe());
   formatPaquet(res);
@@ -244,5 +229,29 @@ void envoiDonnees(){
 
 boolean getEtatLampe(){
   return etat_lampe == true && jour == false;
+}
+
+void allumerLampe(){
+  
+    //allumer la lampe
+   if(etat_lampe == false && etat_batterie == true && jour == false){
+      digitalWrite(LAMPE, HIGH);
+       etat_lampe = true;
+       //envoiDonnees();
+   }else if(etat_batterie == false){
+     digitalWrite(LAMPE, LOW);
+     jour = true;
+     //envoiDonnees();
+   }
+}
+
+void eteindreLampe(){
+  jour = false;
+    //etteindre la lampe
+    if(etat_lampe == true){// || 
+      digitalWrite(LAMPE, LOW);
+      etat_lampe= false;
+      envoiDonnees();
+   }
 }
 
