@@ -5,7 +5,7 @@
  //constantes tension
 
 const float sensibiliteTension = 0.0681*1000;
-const float offsetTension = 2475.0;
+const float offsetTension = 2500.0;
 //const int voltageSensorPin = A1;
 
 //constantes pour le capteur de courant
@@ -15,6 +15,11 @@ const int offset = 2500; // Vcc/2 en mV
 
 const int id=2;
 
+float vout = 0.0;
+float vin = 0.0;
+float R1 = 10000; //10k
+float R2 = 1000; //1000 ohm resistor, I tweaked this
+int val_lu = 0;
 int analogInputPanneau = A1; // I used A1
 int analogInputBatterie = A2;
 
@@ -40,8 +45,8 @@ unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
 
-const int DELAI_ENVOI_MATIN = 60000;
-long DELAI_ENVOI_SOIR = 1800000; //30*DELAI_ENVOI_MATIN
+long DELAI_ENVOI_MATIN = 50000; //60;
+long DELAI_ENVOI_SOIR = 1700000; //30*DELAI_ENVOI_MATIN
 int HEURE_LAMPE_DEBUT = 19;
 int HEURE_LAMPE_FIN = 6;
 
@@ -72,32 +77,19 @@ void loop()
    
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
-    etat_batterie = getEtatBatterie();
-    //allumer la lampe
-    if(etat_lampe == false && etat_batterie == true && jour == false){
-      digitalWrite(LAMPE, HIGH);
-       etat_lampe = true;
-   }else if(etat_batterie == false){
-     digitalWrite(LAMPE, LOW);
-     jour = true;
-   }
+    allumerLampe();
    
-   Serial.println("Lampe allume a l'heure "+heure);
+   //Serial.println("Lampe allume a l'heure "+heure);
     temp = millis();
     if(temp - delai_envoi >= DELAI_ENVOI_SOIR){ //
+      etat_batterie = getEtatBatterie();
       envoiDonnees();
       delai_envoi=temp;
     }
   }
   else{
-    jour = false;
-    //etteindre la lampe
-    if(etat_lampe == true){// || 
-      digitalWrite(LAMPE, LOW);
-      etat_lampe= false;
-      
-    }
-
+    
+    eteindreLampe();
     //if(heure >= 11 && heure < 16){
       temp = millis();
       if(temp - delai_envoi >= DELAI_ENVOI_MATIN){
@@ -130,13 +122,25 @@ float getSensorValue(){
   
 }
 
-
-float getTensionPanneau(){
-   return getVoltageValue(analogInputPanneau);
+float getTension(int pin){
+   val_lu = analogRead(pin);
+   vout = (val_lu * 5.0) / 1024.0;
+   vin = vout / (R2/(R1+R2)); 
+   return vin;
 }
 
 float getTensionBatterie(){
-   return getVoltageValue(analogInputBatterie);
+    return getTension(analogInputPanneau);
+}
+
+float getTensionPanneau(){
+  int sensor = analogRead(analogInputBatterie);
+  float voltage = sensor*(5000.0/1023.0);
+  float num = voltage - offsetTension;
+  float mesure = num / sensibiliteTension; //-3.0;
+  
+  return mesure;
+   //return getTension(analogInputBatterie);
 }
 
 /* Handle interrupt from CC1101 (INT0) gdo0 on pin2 */
@@ -205,7 +209,7 @@ void getHeure()
 }
 
 boolean getEtatBatterie(){
-  return getTensionBatterie() > 12;
+  return getTensionBatterie() > 11;
 }
 
 void envoiDonnees(){
@@ -214,29 +218,40 @@ void envoiDonnees(){
   float courant =   getSensorValue();
   float tension2 =  getTensionPanneau();
    float tension1 = getTensionBatterie();
-  res +=" "+String(courant, DEC);
-  res +=" "+String(tension1, DEC);
-  res +=" "+String(tension2, DEC);
+  res +=" "+String(courant, 3);
+  res +=" "+String(tension1, 3);
+  res +=" "+String(tension2, 3);
   res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
   res+=" "+String(getEtatLampe());
   formatPaquet(res);
   Serial.println("mesure: "+res);
 }
 
-
-float getVoltageValue(int pin){
-  
-  int sensor = analogRead(pin);
-  
-  float voltage = sensor*(5000.0/1023.0);
-  
-  float num = voltage - offsetTension;
-  
-  float mesure = num / sensibiliteTension;
-  
-  return mesure;
-}
 boolean getEtatLampe(){
   return etat_lampe == true && jour == false;
+}
+
+void allumerLampe(){
+  
+    //allumer la lampe
+   if(etat_lampe == false && etat_batterie == true && jour == false){
+      digitalWrite(LAMPE, HIGH);
+       etat_lampe = true;
+       //envoiDonnees();
+   }else if(etat_batterie == false){
+     digitalWrite(LAMPE, LOW);
+     jour = true;
+     //envoiDonnees();
+   }
+}
+
+void eteindreLampe(){
+  jour = false;
+    //etteindre la lampe
+    if(etat_lampe == true){// || 
+      digitalWrite(LAMPE, LOW);
+      etat_lampe= false;
+      envoiDonnees();
+   }
 }
 
