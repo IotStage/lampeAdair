@@ -28,6 +28,8 @@ const int LAMPE = 7;
 boolean etat_lampe = false;
 boolean etat_batterie = true; //pour verifier si on peut allumer la lampe ou pas
 boolean jour = false;
+boolean ALLUMER = true;
+boolean ETEINDRE = false;
 
 //creation d'un objet cc1101
 CC1101 cc1101;
@@ -36,7 +38,6 @@ byte syncWord[2] = {199, 0}; // mot de synchronisation
 
 CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles | FCS)
 
-// a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
 int heure=19;
@@ -49,6 +50,9 @@ long DELAI_ENVOI_MATIN = 50000; //60;
 long DELAI_ENVOI_SOIR = 1700000; //30*DELAI_ENVOI_MATIN
 int HEURE_LAMPE_DEBUT = 19;
 int HEURE_LAMPE_FIN = 6;
+
+float precedent=0.0;
+float SEUIL = 12.0;
 
 void setup()
 {
@@ -67,6 +71,7 @@ void setup()
   //initilisation de lheure
   times = millis();
   delai_envoi=millis();  
+  precedent = getTensionBatterie();
 }
 
 void loop()
@@ -78,8 +83,7 @@ void loop()
 
   if(heure >= HEURE_LAMPE_DEBUT || heure < HEURE_LAMPE_FIN){
     allumerLampe();
-   
-   //Serial.println("Lampe allume a l'heure "+heure);
+    
     temp = millis();
     if(temp - delai_envoi >= DELAI_ENVOI_SOIR){ //
       etat_batterie = getEtatBatterie();
@@ -207,9 +211,50 @@ void getHeure()
   }
   //return heure;
 }
+/*
+ * cette fonction permet de verifier l'etat de la betterie pour l'allumage de la lampe
+ * Dans cette fonction on garde toujours la valeur precedente de la tension de la batterie
+ * si :
+ *    SEUIL < present < precedent => ollume la lampe 
+ *    SEUIL < precedent < present => ollume la lampe 
+ *    present < SEUIL < precedent => ollume la lampe 
+ *    precedent < SEUIL < present => ollume la lampe 
+ *    present < precedent < SEUIL => eteind la lampe 
+ *    precedent < present < SEUIL => eteind la lampe 
+ *    
+ *    
+ */
+// 
 
 boolean getEtatBatterie(){
-  return getTensionBatterie() > 11;
+  float present = getTensionBatterie();
+  
+  if(SEUIL < present && present < precedent){
+    precedent=present;
+    return ALLUMER;
+  }
+  if(SEUIL < precedent && precedent< present){
+    precedent=present;
+    return ALLUMER;
+  }
+  if(present < SEUIL && SEUIL < precedent){
+    precedent=present;
+    return ALLUMER;
+  } 
+  if(precedent < SEUIL && SEUIL < present){
+    precedent=present;
+    return ALLUMER;
+  }
+  if(present < precedent && precedent < SEUIL){
+    precedent=present;
+    return ETEINDRE;
+  }
+  if(precedent < present && present < SEUIL){
+    precedent=present;
+    return ETEINDRE;
+  }  
+     
+  //return getTensionBatterie() > 12;
 }
 
 void envoiDonnees(){
@@ -237,11 +282,11 @@ void allumerLampe(){
    if(etat_lampe == false && etat_batterie == true && jour == false){
       digitalWrite(LAMPE, HIGH);
        etat_lampe = true;
-       //envoiDonnees();
+       envoiDonnees();
    }else if(etat_batterie == false){
      digitalWrite(LAMPE, LOW);
      jour = true;
-     //envoiDonnees();
+     envoiDonnees();
    }
 }
 

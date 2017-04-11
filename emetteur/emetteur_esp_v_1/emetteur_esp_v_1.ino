@@ -39,14 +39,14 @@ CCPACKET paquet; // le paquet envoye (debut de trame | syncword | donnees utiles
 // a flag that a wireless packet has been received
 boolean packetAvailable = false;
 
-int heure=19;
+int heure=10;
 unsigned long times=0;
 unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
 
 long DELAI_ENVOI_MATIN = 60000; //60;
-long DELAI_ENVOI_SOIR = 1800000; //30*DELAI_ENVOI_MATIN
+long DELAI_ENVOI_SOIR = 600000;//1800000; //10*DELAI_ENVOI_MATIN
 int HEURE_LAMPE_DEBUT = 19;
 int HEURE_LAMPE_FIN = 6;
 
