@@ -1,5 +1,9 @@
 <?php
-//	print_r($_GET);	
+//	print_r($_GET);
+	header('Access-Control-Allow-Headers: Access-Control-Allow-Headers,Access-Control-Allow-Methods,Content-Type, Authorization, X-Requested-With,Access-Control-Allow-Credentials,Access-Control-Allow-Origin');
+		header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+		header('Access-Control-Allow-Credentials: true');
+		header('Access-Control-Allow-Methods:REQUEST, GET, POST');	
 	if(isset($_POST['auth']) && $_POST['auth'] == "sur"){
                 	require_once("ControllerClass.php");
                                 

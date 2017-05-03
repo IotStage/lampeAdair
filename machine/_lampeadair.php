@@ -1,8 +1,7 @@
 <?php
 
 	//$_GET['donnees'] = 19;
-//	echo $_GET['donnees'] = "2 11 12 17 1 0";
-//	echo $_GET['donnees'] = "meteo 12 12 N 16 16 16";
+	//echo $_GET['donnees'];
 	if(isset($_GET['donnees'])){
 		$ladate = date("Y-m-d H:i:s");
 		$donnees = $_GET['donnees'];
@@ -18,23 +17,18 @@
 
 		if($id_lampe == "meteo"){
 			$controller->insertMsg($bdd_senpluvio, $_GET['donnees'] . " $ladate");
-			$data_to_send = array(
-				"vitesse_vent" => floatval($donnees[1]),
-				"direction_vent" => floatval($donnees[2]),
-				"cardinalite" => $donnees[3],
-				"temperature" => floatval($donnees[4]),
-				"humidite" => floatval($donnees[5]),
-				"rayonnement_solaire" => floatval($donnees[6]),
-				"date_heure" => $ladate
-			);
-
-//			print_r($data_to_send);
+			$vitesse_vent = floatval($donnees[0]);
+			$direction_vent = floatval($donnees[1]);
+			$cardinalite = $donnees[2];
+			$temperature = floatval($donnees[3]);
+			$humidite = floatval($donnees[4]);
+			$rayonnement_solaire = floatval($donnees[5]);
 			
 			//stocker dans la base de donnees
-                                $controller->insertToDataBase($bdd_senpluvio, $data_to_send, "senpluvio");
+                                //$controller->insertToDataBase($bdd_senpluvio, array($vitesse_vent, $direction_vent, $cardinalite, $temperature, $humidite, $rayonnement_solaire, $ladate));
 
                                 //repliquer dans la base le site
-                        $controller->replicate($bdd_senpluvio, $data_to_send, "senpluvio");
+                                //$controller->replicatePluvio($bdd_senpluvio, array($vitesse_vent, $direction_vent, $cardinalite, $temperature, $humidite, $rayonnement_solaire, $ladate));
 		}
 		else{
 			$courant = $donnees[1];
@@ -50,20 +44,10 @@
 
 			if(is_numeric($heure_init) && is_numeric($courant) && is_numeric($tension_batterie) && is_numeric($tension_panneau) && is_numeric($id_lampe) && is_numeric($etat_lampe)){
 				//stocker dans la base de donnees
-				$data_to_send = array(
-					"courant" => $courant,
-					"tension_batterie" => $tension_batterie,
-					"tension_panneau" => $tension_panneau,
-					"lampe" => $id_lampe,
-					"etat_lampe" => $etat_lampe,
-					"date_heure" => $ladate
-				);
-				
-				//print_r($data_to_send);
-				$controller->insertToDataBase($bdd_local, $data_to_send, "lampadaire");
+				$controller->insertToDataBase($bdd_local, $courant, $tension_batterie, $tension_panneau, $id_lampe, $etat_lampe, $ladate);
 		
 				//repliquer dans la base le site
-				$controller->replicate($bdd_local, $data_to_send, "lampadaire");
+				$controller->replicate($bdd_local, $courant, $tension_batterie, $tension_panneau, $id_lampe, $etat_lampe, $ladate);
 
 			}
 
