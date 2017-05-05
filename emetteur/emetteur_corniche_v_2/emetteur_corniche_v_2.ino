@@ -232,10 +232,10 @@ void envoiDonnees(){
   float courant =   getSensorValue();
   float tension2 =  getTensionPanneau();
    float tension1 = getTensionBatterie();
-  res +=" "+String(courant, 2);
-  res +=" "+String(tension1, 2);
-  res +=" "+String(tension2, 2);
-  //res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
+  res +=" "+String(courant, 1);
+  res +=" "+String(tension1, 1);
+  res +=" "+String(tension2, 1);
+  res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
   res+=" "+String(getEtatLampe());
   sendSMS(res);
   Serial.println("mesure: "+res);
