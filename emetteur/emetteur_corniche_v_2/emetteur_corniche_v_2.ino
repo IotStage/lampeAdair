@@ -1,3 +1,23 @@
+/**
+ * Emmetteur corniche pour l'envoie de la tension et du courant ddans une base de données distante
+ * les heures de l'envoie sont :
+ *  -- 6h-19h -> 10 minutes par donnees
+ *  -- 20h-7h -> 15 minutes par donnees
+ *  Composition des trames : 
+ *  -- 1 trames = 7 donnees
+ *  Composition des donnees :
+ *  -- id - courant - TensionBatterie - TensionPanneau - heure - EtatLampe
+ *  
+ *  nombre de Messages :
+ *    -- 6h-19h => 12 paquets => 130 f
+ *    -- 20h-5h => 5 paquets => 50 f 
+ *  credit mois :
+ *    5 400 f
+ *  
+ *  author : bassirou NGOM (bassiroungom26@gmail.com)
+ *  date : 06/05/2017
+ */
+
 #include <GSM.h>
 #define PINNUMBER ""
 #define NUMBERSERVER "785312659"
@@ -37,14 +57,14 @@ boolean ALLUMER = true;
 boolean ETEINDRE = false;
 
 
-int heure=11;
+int heure=20;
 unsigned long times=0;
 unsigned long delai_envoi = 0;
 unsigned long MAX_ULONG = 4294967295L;
 unsigned long temp;
 
-long DELAI_ENVOI_MATIN = 20000; //60;
-long DELAI_ENVOI_SOIR = 1700000; //30*DELAI_ENVOI_MATIN
+long DELAI_ENVOI_MATIN = 600000; //10 minutes;
+long DELAI_ENVOI_SOIR = 600000; //15 minutes
 int HEURE_LAMPE_DEBUT = 19;
 int HEURE_LAMPE_FIN = 6;
 
@@ -237,8 +257,8 @@ void envoiDonnees(){
   res +=" "+String(tension2, 1);
   res+=" "+String(heure, DEC); // on ajoute l'heure ur la mesure a envoyer
   res+=" "+String(getEtatLampe());
-  sendSMS(res);
   Serial.println("mesure: "+res);
+  sendSMS(res);
 }
 
 boolean getEtatLampe(){
